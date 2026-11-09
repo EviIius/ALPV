@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""daybook-dates — see and set the day each file in your library belongs to.
+
+Works without Daybook running and without its virtual environment (standard
+library only), so you, a script or Claude can run it against the folder:
+
+    ./daybook-dates scan                  files that need a date (or a second look)
+    ./daybook-dates scan --all            every file, with the date Daybook picked
+    ./daybook-dates scan --json           the same, as JSON (for scripts and agents)
+    ./daybook-dates explain FILE          every clue for one file, with scores
+    ./daybook-dates set FILE 2026-10-23 [--end 2026-10-24] [--time 14:30] [--by claude] [--note "why"]
+    ./daybook-dates none FILE             mark a file as having no date
+    ./daybook-dates clear FILE            forget the decision; go back to automatic
+    ./daybook-dates list                  decisions saved in .daybook/dates.json
+
+FILE is a path relative to the library folder (e.g. Kelly/SAS_Workspace_Owner_Kickoff.pptx).
+The library is the folder above this one, or pass --library PATH.
+Decisions go to <library>/.daybook/dates.json; a running Daybook picks them up within seconds.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from datetime import date
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+
+from app.services import datescan  # noqa: E402  (standard library only)
+
+
+def find_library(arg: str | None) -> Path:
+    if arg:
+        p = Path(arg).expanduser().resolve()
+    else:
+        p = HERE.parent
+        if not datescan.is_library(p):
+            cwd = Path.cwd().resolve()
+            for cand in [cwd, *cwd.parents]:
+                if datescan.is_library(cand):
+                    p = cand
+                    break
+    if not p.is_dir():
+        sys.exit(f"Not a folder: {p}")
+    return p
+
+
+def rel_path(root: Path, raw: str) -> str:
+    p = Path(raw)
+    if p.is_absolute():
+        try:
+            return p.resolve().relative_to(root).as_posix()
+        except ValueError:
+            sys.exit(f"{raw} isn't inside {root}")
+    if not (root / p).exists():
+        sys.exit(f"No such file in the library: {raw}")
+    return p.as_posix()
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(prog="daybook-dates", description=__doc__.split("\n\n")[0])
+    ap.add_argument("--library", help="Library folder (default: the folder containing Daybook)")
+    ap.add_argument("--tz", help="Time zone for timestamps, e.g. America/New_York (default: library setting)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("scan", help="Show the date picked for each file")
+    s.add_argument("--all", action="store_true", help="Include files that are already dated confidently")
+    s.add_argument("--json", action="store_true")
+    s.add_argument("--no-git", action="store_true", help="Don't read git history")
+    e = sub.add_parser("explain", help="Every clue for one file")
+    e.add_argument("file")
+    st = sub.add_parser("set", help="Choose a date for a file")
+    st.add_argument("file")
+    st.add_argument("date")
+    st.add_argument("--end")
+    st.add_argument("--time")
+    st.add_argument("--by", default="you", choices=["you", "claude", "ai"])
+    st.add_argument("--note")
+    n = sub.add_parser("none", help="Mark a file as having no date")
+    n.add_argument("file")
+    n.add_argument("--by", default="you", choices=["you", "claude", "ai"])
+    n.add_argument("--note")
+    c = sub.add_parser("clear", help="Forget the decision for a file")
+    c.add_argument("file")
+    sub.add_parser("list", help="Decisions saved in dates.json")
+    args = ap.parse_args()
+    root = find_library(args.library)
+
+    if args.cmd == "scan":
+        rows = datescan.scan_library(root, tz_name=args.tz, use_git=not args.no_git)
+        if not args.all:
+            rows = [r for r in rows if r["status"] in ("suggested", "review", "none")]
+        if args.json:
+            for r in rows:
+                r["mentions"] = r["mentions"][:8]
+            print(json.dumps({"library": str(root), "files": rows}, indent=2))
+            return
+        if not rows:
+            print("Every file has a confident date. (Use --all to list them.)")
+            return
+        for r in rows:
+            when = (r["date"] or (r["candidates"][0]["date"] + "?" if r["candidates"] else "—"))
+            if r.get("end"):
+                when += f"…{r['end'][5:]}"
+            print(f"{r['status']:9}  {when:16} {r['confidence']:.2f}  {(r['source'] or (r['candidates'][0]['source'] if r['candidates'] else '')):13}  {r['path']}")
+        print(f"\n{len(rows)} file(s). 'explain FILE' shows the clues; 'set FILE YYYY-MM-DD --by claude' decides.")
+    elif args.cmd == "explain":
+        rel = rel_path(root, args.file)
+        row = next((r for r in datescan.scan_library(root, tz_name=args.tz) if r["path"] == rel), None)
+        if not row:
+            sys.exit("Daybook doesn't read that kind of file.")
+        print(f"{rel}\n  decision: {row['status']} {row['date'] or '—'}{' to ' + row['end'] if row['end'] else ''}"
+              f"{' at ' + row['time'] if row['time'] else ''} (confidence {row['confidence']:.2f}, {row['source'] or 'no source'})")
+        if row["conflict"]:
+            print("  note: strong clues disagree; worth a look")
+        print("  clues:")
+        for cnd in row["candidates"]:
+            print(f"    {cnd['score']:.2f}  {cnd['date']}{'…' + cnd['end'] if cnd.get('end') else ''}  {cnd['source']:13}  {cnd['evidence'][:110]}")
+        if row["mentions"]:
+            print("  other dates it mentions:")
+            for m in row["mentions"][:12]:
+                print(f"    {m['date']}  {m['kind']:8}  {m['snippet'][:110]}")
+    elif args.cmd == "set":
+        rel = rel_path(root, args.file)
+        for v in (args.date, args.end):
+            if v:
+                date.fromisoformat(v)
+        datescan.set_entry(root, rel, {"date": args.date, "end": args.end, "time": args.time, "by": args.by, "note": args.note})
+        print(f"{rel} → {args.date}" + (f" to {args.end}" if args.end else ""))
+    elif args.cmd == "none":
+        rel = rel_path(root, args.file)
+        datescan.set_entry(root, rel, {"none": True, "by": args.by, "note": args.note})
+        print(f"{rel} → no date")
+    elif args.cmd == "clear":
+        rel = args.file
+        datescan.set_entry(root, rel, None)
+        print(f"{rel} → automatic")
+    elif args.cmd == "list":
+        data = datescan.load_sidecar(root)["dates"]
+        if not data:
+            print("No decisions yet.")
+        for rel, e in data.items():
+            print(f"{('no date' if e.get('none') else e.get('date')):12} {e.get('by', 'you'):7} {rel}" + (f"  — {e['note']}" if e.get("note") else ""))
+
+
+if __name__ == "__main__":
+    main()

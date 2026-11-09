@@ -1,0 +1,13 @@
+# Daybook (the app in Daybook/): local environment and caches
+Daybook/.venv/
+Daybook/.pytest_cache/
+Daybook/tools/node_modules/
+__pycache__/
+*.pyc
+
+# Files deleted from Daybook wait here until the trash is emptied
+.daybook/trash/
+*.tmp
+
+# macOS
+.DS_Store

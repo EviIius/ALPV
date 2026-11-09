@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "name": "ALPV",
+  "timezone": "America/New_York",
+  "about": "This folder is a Daybook library. Daybook reads the files here in place; nothing is copied out. dates.json holds the day each file belongs to; trash/ keeps files deleted from Daybook."
+}

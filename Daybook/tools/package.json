@@ -1,0 +1,32 @@
+{
+  "name": "daybook-vendor-build",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Builds the vendored, self-hosted frontend libraries (editor, markdown, UI runtime, fonts, icons) into app/static. Only needed if you want to upgrade them — the built files are committed.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "5.3.0",
+    "@fontsource-variable/literata": "5.3.0",
+    "@tiptap/core": "3.33.0",
+    "@tiptap/extension-highlight": "3.33.0",
+    "@tiptap/extension-image": "3.33.0",
+    "@tiptap/extension-link": "3.33.0",
+    "@tiptap/extension-list": "3.33.0",
+    "@tiptap/extension-table": "3.33.0",
+    "@tiptap/extension-typography": "3.33.0",
+    "@tiptap/extensions": "3.33.0",
+    "@tiptap/markdown": "3.33.0",
+    "@tiptap/pm": "3.33.0",
+    "@tiptap/starter-kit": "3.33.0",
+    "@tiptap/suggestion": "3.33.0",
+    "dompurify": "3.4.17",
+    "esbuild": "0.28.2",
+    "htm": "3.1.1",
+    "lucide-static": "1.70.0",
+    "marked": "17.0.6",
+    "preact": "11.2.0"
+  }
+}

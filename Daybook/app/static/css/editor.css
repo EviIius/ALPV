@@ -1,0 +1,86 @@
+/* Daybook — note text (editor and rendered Markdown share these styles). */
+
+.prose {
+  font-family: var(--read);
+  font-size: 1.0625rem;
+  line-height: 1.68;
+  color: var(--ink);
+  font-optical-sizing: auto;
+  word-wrap: break-word;
+  max-width: 68ch;
+}
+.prose-sm { font-size: 0.9375rem; line-height: 1.6; max-width: none; }
+.prose:focus { outline: none; }
+.prose > * + * { margin-top: 0.75em; }
+.prose h1, .prose h2, .prose h3, .prose h4 { font-family: var(--read); font-weight: 680; line-height: 1.25; letter-spacing: -0.005em; }
+.prose h1 { font-size: 1.6em; margin-top: 1.4em; }
+.prose h2 { font-size: 1.3em; margin-top: 1.3em; padding-bottom: 0.15em; border-bottom: 1px solid var(--rule); }
+.prose h3 { font-size: 1.1em; margin-top: 1.2em; }
+.prose h4 { font-size: 1em; margin-top: 1em; color: var(--graphite); }
+.prose > :first-child { margin-top: 0; }
+.prose p { margin: 0; }
+.prose p + p { margin-top: 0.75em; }
+.prose strong { font-weight: 700; }
+.prose a { color: var(--blue); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--blue) 40%, transparent); }
+.prose a[href^="#/notes/"] { text-decoration-style: dotted; text-decoration-thickness: 1.5px; }
+.prose mark { background: color-mix(in srgb, #f4d55a 55%, transparent); color: inherit; padding: 0 1px; border-radius: 2px; }
+:root[data-theme="dark"] .prose mark { background: rgba(217, 164, 65, 0.35); }
+.prose code { font-family: var(--mono); font-size: 0.86em; padding: 0.1em 0.35em; border-radius: 4px; background: var(--paper-deep); }
+.prose pre { font-family: var(--mono); font-size: 0.84em; line-height: 1.55; padding: 12px 14px; border-radius: var(--r); background: var(--desk); color: var(--desk-ink); overflow-x: auto; }
+.prose pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.prose blockquote { margin: 1em 0; padding: 0.1em 0 0.1em 1em; border-left: 3px solid var(--rule-strong); color: var(--graphite); font-style: italic; }
+.prose hr { border: 0; height: 1px; background: var(--rule-strong); margin: 1.6em 0; }
+.prose ul, .prose ol { padding-left: 1.4em; margin: 0.6em 0; }
+.prose li { margin: 0.2em 0; }
+.prose li > p { margin: 0; }
+.prose li::marker { color: var(--graphite); }
+.prose img { max-width: 100%; height: auto; border-radius: var(--r); border: 1px solid var(--rule); margin: 0.8em 0; }
+.prose img[data-blocked] { display: inline-block; padding: 6px 10px; font-family: var(--ui); font-size: var(--t-xs); color: var(--faint); border: 1px dashed var(--rule-strong); }
+.prose img.ProseMirror-selectednode { outline: 2px solid var(--blue); }
+.prose table { border-collapse: collapse; width: 100%; margin: 1em 0; font-family: var(--ui); font-size: 0.85em; display: block; overflow-x: auto; }
+.prose th, .prose td { border: 1px solid var(--rule-strong); padding: 6px 9px; text-align: left; vertical-align: top; min-width: 60px; }
+.prose th { background: var(--paper-deep); font-weight: 650; }
+.prose td > p, .prose th > p { margin: 0; }
+.prose .selectedCell { background: var(--nonphoto-wash); }
+
+/* Checklists: editor (TipTap) and rendered Markdown (GFM) */
+.prose ul[data-type="taskList"] { list-style: none; padding-left: 0.1em; }
+.prose ul[data-type="taskList"] li { display: flex; gap: 0.55em; align-items: flex-start; }
+.prose ul[data-type="taskList"] li > label { flex: none; margin-top: 0.28em; user-select: none; }
+.prose ul[data-type="taskList"] li > div { flex: 1; min-width: 0; }
+.prose ul[data-type="taskList"] li[data-checked="true"] > div { color: var(--faint); text-decoration: line-through; text-decoration-color: var(--faint); }
+.prose ul[data-type="taskList"] input[type="checkbox"],
+.prose li > input[type="checkbox"] {
+  appearance: none; width: 1em; height: 1em; margin: 0; border: 1.5px solid var(--graphite); border-radius: 3px; background: var(--sheet); cursor: pointer; display: inline-grid; place-content: center; vertical-align: -0.12em;
+}
+.prose ul[data-type="taskList"] input[type="checkbox"]:checked,
+.prose li > input[type="checkbox"]:checked { background: var(--ink); border-color: var(--ink); }
+.prose ul[data-type="taskList"] input[type="checkbox"]:checked::after,
+.prose li > input[type="checkbox"]:checked::after { content: ""; width: 0.55em; height: 0.28em; border-left: 2px solid var(--on-ink); border-bottom: 2px solid var(--on-ink); transform: rotate(-45deg) translate(0.05em, -0.05em); }
+.prose li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.2em; }
+.prose li > input[type="checkbox"] { margin-right: 0.5em; }
+
+/* Placeholder */
+.prose p.is-editor-empty:first-child::before,
+.prose .is-empty::before { content: attr(data-placeholder); color: var(--faint); float: left; height: 0; pointer-events: none; font-style: italic; }
+
+.db-editor:focus, .db-editor:focus-visible { outline: none; box-shadow: none; }
+.db-editor { min-height: 50dvh; padding-bottom: 30dvh; caret-color: var(--blue); }
+.ProseMirror-gapcursor:after { border-top-color: var(--ink); }
+
+/* "/" commands and "[[" note links */
+.db-popup {
+  position: fixed; z-index: 70; width: 290px; max-height: 340px; overflow-y: auto; padding: 5px;
+  background: var(--sheet); color: var(--ink); border: 1px solid var(--rule-strong); border-radius: var(--r-lg); box-shadow: var(--shadow-pop);
+  font-family: var(--ui); font-size: var(--t-md);
+}
+.db-popup-group { padding: 7px 9px 3px; font-size: 11px; font-weight: 600; color: var(--faint); }
+.db-popup-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 32px; padding: 0 9px; border: 0; border-radius: var(--r); background: none; text-align: left; }
+.db-popup-item .ico { width: 16px; height: 16px; color: var(--graphite); }
+.db-popup-item.is-active { background: var(--blue-wash); }
+.db-popup-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.db-popup-hint { color: var(--faint); font-size: var(--t-xs); }
+.db-popup-empty { padding: 10px; color: var(--faint); font-size: var(--t-sm); }
+
+/* AI streaming caret */
+.typing::after { content: "▍"; color: var(--blue); animation: pulse 1s steps(2) infinite; margin-left: 1px; }

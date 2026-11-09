@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "about": "Dates assigned to files in this folder. Daybook reads this file and puts each file on that day of the calendar. Entries are added when you (or your local AI, or Claude) pick a date. Edit by hand or run Daybook/daybook-dates. Keys are paths relative to this folder.",
+  "dates": {
+    "Kelly/Corporate_Risk_SAS_Strategy_Regenerated.docx": {
+      "date": "2026-10-19",
+      "by": "claude",
+      "note": "Committed Oct 19, 8:20 PM, with the Oct 19 SAS working sessions with Kelly and exit-strategy deck v1; no date inside",
+      "at": "2026-11-09"
+    },
+    "Kelly/SAS_Reduction_Plan_DRAFT_v3.pptx": {
+      "date": "2026-10-20",
+      "time": "14:30",
+      "by": "claude",
+      "note": "Speaker notes: for discussion with Jacqueline, Tuesday October 20 (about 2:30); committed the evening before",
+      "at": "2026-11-09"
+    },
+    "Kelly/SAS_Workspace_Owner_Kickoff.pptx": {
+      "date": "2026-10-23",
+      "by": "claude",
+      "note": "Built Oct 23 (committed 1:36 PM) from the kickoff brief Kelly recorded at 12:47 PM that day; no date inside",
+      "at": "2026-11-09"
+    },
+    "Mockups/index (1).html": {
+      "date": "2026-11-08",
+      "by": "claude",
+      "note": "CR Intake Mockup, added to the repo Nov 8 (1:58 PM); no date inside",
+      "at": "2026-11-09"
+    }
+  }
+}

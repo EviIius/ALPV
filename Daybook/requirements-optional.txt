@@ -1,0 +1,11 @@
+# Optional, all local. Install with:  .venv/bin/pip install -r requirements-optional.txt
+
+# Text recognition for screenshots, photos and scanned PDFs using Apple's
+# on-device Vision framework (macOS only).
+pyobjc-framework-Vision; sys_platform == "darwin"
+
+# Local speech-to-text for audio files (voice memos, recorders).
+mlx-whisper; sys_platform == "darwin" and platform_machine == "arm64"
+
+# Outlook .msg emails.
+extract-msg

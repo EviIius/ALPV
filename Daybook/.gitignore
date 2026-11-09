@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Node (only used to rebuild vendored assets)
+tools/node_modules/
+
+# Local data (Daybook stores data outside the repo by default; these guard
+# against --data pointing inside it)
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite3
+*.daybook
+
+# Environment & OS
+.env
+.DS_Store
+*.log
