@@ -11,7 +11,7 @@ from fastapi.responses import Response
 
 from .. import __version__, db, security
 from ..bus import changed
-from ..services import backup, notify, privacy
+from ..services import backup, notify, privacy, updates
 from ..util import tzinfo
 
 router = APIRouter(prefix="/api")
@@ -121,6 +121,7 @@ def system():
         "version": __version__, "python": sys.version.split()[0], "platform": platform.platform(),
         "data_dir": str(p.data), "db_bytes": p.db.stat().st_size if p.db.exists() else 0,
         "uptime_s": int(time.time() - _STARTED), "fts": db.fts_available(),
+        **{k: v for k, v in updates.status().items() if k in ("disk_version", "update_ready", "restartable")},
     }
 
 

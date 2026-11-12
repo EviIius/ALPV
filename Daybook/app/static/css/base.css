@@ -112,7 +112,12 @@
   --r-lg: 10px;
   --sidebar: 256px;
   --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* --vp-gap: the strip at the bottom of the screen that iOS leaves out of the page in iPhone Home
+     Screen apps (iOS 26 and later); measured in main.js, 0 everywhere else. The strip already keeps
+     things clear of the home indicator, so the usual bottom inset shrinks by that much. The inset is
+     also capped at its real size (34px), because iOS can report it too large in Home Screen apps. */
+  --vp-gap: 0px;
+  --safe-bottom: max(0px, calc(min(env(safe-area-inset-bottom, 0px), 34px) - var(--vp-gap)));
   color-scheme: light;
 }
 

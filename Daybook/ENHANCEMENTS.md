@@ -6,6 +6,25 @@ This file lists what shipped and what's planned next. Each planned item has a sh
 
 ---
 
+## Shipped in 2.2.2: repeating tasks, and definitions suggested from your own notes
+
+- **Repeating tasks.** Give a task a repeat (every day, weekday, week, two weeks, month, year, or the rule you typed: "pay rent on the 1st every month"). Ticking it off creates the next one with its new due date, keeping the list, priority, reminder and details. Month ends are handled (the 31st becomes the last day of shorter months), and a task that's weeks overdue jumps to the next date that's still ahead instead of piling up.
+- **Suggest a definition.** For terms your notes use but never define, the editor can ask your local AI what the term means, going only by the passages that use it. It names the notes it read, never reads locked notes, says so when your notes don't explain the term instead of guessing, and nothing is saved until you press Save.
+- 71 tests.
+
+---
+
+## Shipped in 2.2.1: open decks as slides, finish updates from your phone
+
+- **Slides first.** A deck's note now opens with its first slide and a strip of the next ones; tap any to read from there. The toolbar button says **Slides** (or **Pages**, **Table**) instead of showing only an icon. Big decks reach the phone about ten times smaller.
+- **Update ready → Restart now.** Daybook notices when the files on your Mac are newer than the copy that's running, rehearses the new version (requirements, every module, database changes on a throwaway copy) and restarts in place in a few seconds. A failed rehearsal changes nothing and says why. Also in Settings → About, and as `Restart Daybook.command`.
+- **No more "Not Found" after an update.** New screens used to reach a server that hadn't restarted yet. They now say that a restart is needed, and offer it.
+- **Reload prompt** when this device fetched newer pages while the app was open, instead of needing to open it twice.
+- **iPhone bottom bar.** iOS 26 and later lay a Home Screen app with a see-through status bar out one status-bar height short of the screen and draw nothing below that line. Daybook measures the strip, keeps the bar where iOS draws, drops the padding the strip already provides, and colours the strip like the bar, so the bar reaches the bottom of the screen. Icons added from now on use a solid status bar, which avoids the iOS bug altogether. Settings → About shows the measurements.
+- The status line under a note is one tidy line on phones, and read-only files say "Read-only" instead of "Saved".
+
+---
+
 ## Shipped in 2.2: read, prepare and plan, without leaving Daybook
 
 ### Reader for decks, PDFs and spreadsheets
@@ -42,7 +61,7 @@ This file lists what shipped and what's planned next. Each planned item has a sh
 - Clicking or selecting text in a read-only document no longer tries to save it.
 
 ### Tests
-- 64 tests (13 new): the slide renderer against real deck features, PDF and sheet pages, page search, highlights, locking, meeting prep, the phone feed (including refusing public addresses), search operators, the glossary and fixes, time blocking and Look back.
+- 69 tests (18 new, including a real restart of the server): the slide renderer against real deck features, PDF and sheet pages, page search, highlights, locking, meeting prep, the phone feed (including refusing public addresses), search operators, the glossary and fixes, time blocking and Look back.
 
 ---
 
@@ -163,11 +182,10 @@ This file lists what shipped and what's planned next. Each planned item has a sh
 
 ### Next up (highest value)
 1. **Offline mode for the phone (M).** Keep recently opened notes readable offline, and queue edits that sync when you reconnect. *Why:* covers Tailscale outages and planes.
-2. **Recurring tasks (S).** "Pay rent on the 1st every month" already parses; tasks just need a repeat rule. *Why:* finishes the plain-language capture.
-3. **Drag to move or resize events (M)** in the week and day views. *Why:* the fastest way to reschedule.
-4. **Share sheet import on Android, and an iOS Shortcut (S).** Send a PDF or web page from your phone straight into Daybook. *Why:* makes "documents become notes" work from anywhere.
-5. **Voice memo pipeline (S).** Watch a voice-memo or recorder export folder, transcribe locally, then run "transcript → notes". *Why:* builds on the transcription engine that's already here.
-6. **Full database encryption at rest (M).** SQLCipher, unlocked by your sign-in passphrase. *Why:* protects the database file even if FileVault is off.
+2. **Drag to move or resize events (M)** in the week and day views. *Why:* the fastest way to reschedule.
+3. **Share sheet import on Android, and an iOS Shortcut (S).** Send a PDF or web page from your phone straight into Daybook. *Why:* makes "documents become notes" work from anywhere.
+4. **Voice memo pipeline (S).** Watch a voice-memo or recorder export folder, transcribe locally, then run "transcript → notes". *Why:* builds on the transcription engine that's already here.
+5. **Full database encryption at rest (M).** SQLCipher, unlocked by your sign-in passphrase. *Why:* protects the database file even if FileVault is off.
 
 ### Notes
 - Note-to-note graph view (M).
@@ -187,7 +205,6 @@ This file lists what shipped and what's planned next. Each planned item has a sh
 - **Calendar events from meeting notes**: offer to create the event for a dated meeting note that has no matching calendar event (S).
 - **Deck thumbnails** in lists and on the timeline, from the reader's slide renderer (S).
 - **Reader for Word documents with their own layout** (headers, columns, page breaks), not just the converted text (M).
-- **Glossary across the library**: suggest definitions for "Needs a definition" terms from your local model, citing the notes it read (S).
 - **Commit from Daybook**: a reviewed "commit these notes" button for library changes (never push) (S).
 - **Smarter people**: merge "Jen" and "Jennifer", and let you rename or hide a person (S).
 

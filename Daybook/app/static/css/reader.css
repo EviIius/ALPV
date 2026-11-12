@@ -105,7 +105,7 @@
 @media (hover: none) and (pointer: coarse) { .rd-selbar .sw { width: 30px; height: 30px; } }
 
 .rd-pop { position: fixed; z-index: 75; width: 320px; background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,.25); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-.rd-pop.as-sheet { left: 8px; right: 8px; bottom: calc(8px + var(--safe-bottom, env(safe-area-inset-bottom))); width: auto; top: auto; }
+.rd-pop.as-sheet { left: 8px; right: 8px; bottom: calc(8px + var(--safe-bottom)); width: auto; top: auto; }
 .rd-pop .q { font-family: var(--read); font-size: 14px; color: var(--graphite); max-height: 6.5em; overflow: auto; border-left: 3px solid #ffd400; padding-left: 8px; }
 .rd-pop textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid var(--rule-strong); border-radius: 8px; padding: 8px; background: var(--paper); color: inherit; font: inherit; }
 .rd-pop .row { display: flex; align-items: center; gap: 6px; }
@@ -160,7 +160,7 @@
 .rd-present .stage { position: relative; overflow: hidden; flex: none; }
 .rd-present .stage .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .rd-present-notes { width: min(100%, 1100px); max-height: 26vh; overflow: auto; color: #e9efe9; background: #111; padding: 12px 18px; white-space: pre-wrap; font-size: 18px; line-height: 1.45; box-sizing: border-box; cursor: auto; user-select: text; }
-.rd-present-bar { position: absolute; right: 14px; bottom: calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 8px; color: #aab4ad; font-size: 13px; opacity: .35; transition: opacity .2s; }
+.rd-present-bar { position: absolute; right: 14px; bottom: calc(10px + var(--safe-bottom)); display: flex; align-items: center; gap: 8px; color: #aab4ad; font-size: 13px; opacity: .35; transition: opacity .2s; }
 .rd-present:hover .rd-present-bar, .rd-present-bar:focus-within { opacity: 1; }
 .rd-present-bar .btn { color: #e9efe9; border-color: #3a423e; }
 

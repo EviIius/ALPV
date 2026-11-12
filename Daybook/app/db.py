@@ -399,6 +399,10 @@ MIGRATIONS: list[str] = [
 
     ALTER TABLE events ADD COLUMN task_id TEXT;
     """,
+    # 4 — repeating tasks
+    """
+    ALTER TABLE tasks ADD COLUMN repeat TEXT;
+    """,
 ]
 
 

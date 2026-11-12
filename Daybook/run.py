@@ -43,6 +43,21 @@ def lan_ip() -> str | None:
         return None
 
 
+def wait_for_port(host: str, port: int, seconds: float = 8.0) -> None:
+    """After an in-place restart, give the old listener a moment to close."""
+    import time
+
+    deadline = time.time() + seconds
+    while time.time() < deadline:
+        try:
+            with socket.socket(socket.AF_INET6 if ":" in host else socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind((host, port))
+            return
+        except OSError:
+            time.sleep(0.2)
+
+
 def _tailscale_bin() -> str | None:
     return shutil.which("tailscale") or next(
         (p for p in ("/Applications/Tailscale.app/Contents/MacOS/Tailscale",) if Path(p).exists()), None)
@@ -110,8 +125,26 @@ def main() -> None:
         print(f"  Setup code for other devices:  {security.setup_code()}")
     print(f"{line}\n  Press Ctrl+C to stop.\n")
 
-    uvicorn.run(create_app(data_dir), host=host, port=args.port, log_level="warning", proxy_headers=False,
-                server_header=False, access_log=False)
+    from app import runtime
+
+    if os.environ.pop("DAYBOOK_RESTARTED", None):
+        wait_for_port(host, args.port)   # the copy this one replaces has just let go of the port
+    config = uvicorn.Config(create_app(data_dir), host=host, port=args.port, log_level="warning", proxy_headers=False,
+                            server_header=False, access_log=False, timeout_graceful_shutdown=3)
+    server = uvicorn.Server(config)
+    runtime.server = server
+    try:
+        server.run()
+    except KeyboardInterrupt:
+        pass
+    if runtime.restart_requested:
+        # Asked for from the app (Settings → About, or the "update ready" notice) after the files
+        # on disk passed a start-up check. Same window, same address, same options.
+        print("\n  Restarting Daybook with the updated files…", flush=True)
+        os.environ["DAYBOOK_RESTARTED"] = "1"
+        os.execv(sys.executable, [sys.executable, str(ROOT / "run.py"), *sys.argv[1:]])
+    if not server.started:
+        sys.exit(3)
 
 
 if __name__ == "__main__":

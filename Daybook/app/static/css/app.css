@@ -114,10 +114,16 @@
 /* Shell                                                               */
 /* ------------------------------------------------------------------ */
 .app { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); position: fixed; top: 0; left: 0; right: 0;
-  height: var(--app-h, 100%); }
+  height: 100%; background: var(--paper); }
 /* The page never scrolls; every pane scrolls inside the app. (On iPhone a page that can scroll even a
    little gets nudged by the keyboard and leaves a gap above the tab bar.) */
 html, body { overflow: hidden; }
+/* iPhone Home Screen app, iOS 26 and later: iOS lays the page out one status-bar height short of the
+   screen and draws nothing of the page below that line; the strip left over shows the page's own
+   background colour. So the tab bar stays where iOS draws (its home-indicator padding is dropped
+   through --safe-bottom), and the page background takes the bar's colour while the bar is on screen,
+   which makes the strip read as the bottom of the bar. (.app paints the paper itself.) */
+html.vp-gap:has(.tabbar), html.vp-gap:has(.tabbar) body { background-color: var(--desk); }
 .sidebar {
   background: var(--desk); color: var(--desk-ink);
   display: flex; flex-direction: column; min-height: 0;
@@ -473,6 +479,15 @@ html, body { overflow: hidden; }
 .tag-input { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .tag-input input { flex: 1; min-width: 60px; }
 .editor-status { display: flex; align-items: center; gap: var(--s3); padding: 6px var(--s4); border-top: 1px solid var(--rule); font-size: var(--t-xs); color: var(--faint); background: var(--sheet); }
+.editor-status > * { flex: none; white-space: nowrap; }
+.editor-status .es-file { display: flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; }
+.editor-status .es-file .ico { flex: none; }
+.editor-status .es-file .t { overflow: hidden; text-overflow: ellipsis; }
+.editor-status .es-book { margin-left: auto; }
+@media (max-width: 599px) {
+  .editor-status { gap: var(--s2); padding: 5px var(--s3); }
+  .editor-status .es-book { display: none; }
+}
 .editor-status .saved { color: var(--green-ok); }
 .editor-status .saving { color: var(--blue); }
 .editor-status .error { color: var(--red); }
@@ -587,7 +602,7 @@ html, body { overflow: hidden; }
   .app, .main, .notes-layout, .editor-shell { display: block !important; position: static !important; height: auto !important; overflow: visible !important; }
   html, body { overflow: visible !important; }
   .notes-list-pane { display: none !important; }
-  body, .paper-grid { background: #fff !important; }
+  html, body, .app, .paper-grid { background: #fff !important; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -829,6 +844,8 @@ html, body { overscroll-behavior: none; }
 .gl-meta a { color: var(--graphite); }
 .gl-actions { display: flex; gap: 2px; }
 .gl-foot { margin-top: var(--s4); font-size: var(--t-xs); }
+.gl-suggest { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: -4px; }
+.gl-suggest .hint { margin: 0; }
 @media (max-width: 640px) {
   .gl-row { grid-template-columns: minmax(0, 1fr) auto; }
   .gl-term { grid-column: 1; grid-row: 1; }
@@ -892,3 +909,38 @@ html, body { overscroll-behavior: none; }
 .tg-event .t .ico { width: 12px; height: 12px; vertical-align: -2px; }
 .prep-pill.task { color: var(--graphite); cursor: default; }
 .prep-pill.task:hover { background: var(--sheet); }
+
+/* "Update ready" / "needs a restart" notice */
+.update-note { position: fixed; z-index: 58; top: 16px; right: 16px; width: min(380px, calc(100% - 32px)); display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; background: var(--sheet); border: 1px solid var(--rule-strong); border-left: 4px solid var(--blue); border-radius: var(--r-lg); box-shadow: var(--shadow-pop); font-size: var(--t-sm); }
+.update-note > .ico { color: var(--blue); flex: none; margin-top: 1px; }
+.update-note > .spinner { flex: none; margin-top: 2px; }
+.update-note strong { display: block; font-size: var(--t-md); }
+.update-note p { margin: 2px 0 0; color: var(--graphite); line-height: 1.45; overflow-wrap: anywhere; }
+@media (max-width: 899px) { .update-note { top: calc(var(--safe-top) + 62px); left: 12px; right: 12px; width: auto; } }
+@media print { .update-note { display: none !important; } }
+
+/* Slides at the top of a deck's note */
+.tb-read { color: var(--blue); }
+.file-bar .tb-read { background: var(--blue-wash); }
+.deck-peek { margin: 0 0 var(--s4); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.deck-peek .frame { position: relative; overflow: hidden; display: block; background: #fff; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.14); }
+.deck-peek .inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+.dp-first { position: relative; display: block; align-self: flex-start; max-width: 100%; text-decoration: none; border-radius: 4px; }
+.dp-first:focus-visible, .dp-thumb:focus-visible, .dp-more:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.dp-open { position: absolute; right: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border-radius: 999px;
+  background: var(--blue); color: #fff; font-family: var(--ui); font-size: var(--t-md); font-weight: 650; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+:root[data-theme="dark"] .dp-open { color: #0e1612; }
+.dp-open .n { font-weight: 560; opacity: .85; }
+.dp-first:hover .dp-open { background: var(--blue-hover); }
+.dp-strip { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.dp-thumb { position: relative; flex: none; text-decoration: none; border-radius: 4px; }
+.dp-thumb .num { position: absolute; left: 4px; bottom: 4px; min-width: 18px; padding: 0 5px; border-radius: 9px; background: rgba(15, 25, 20, .72); color: #fff; font-family: var(--ui); font-size: 11px; font-weight: 650; line-height: 18px; text-align: center; }
+.dp-more { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px dashed var(--rule-strong); border-radius: 4px; color: var(--graphite); text-decoration: none; font-family: var(--ui); font-size: var(--t-xs); }
+.dp-more strong { font-size: var(--t-lg); color: var(--ink); }
+.dp-wait { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 12px 14px; border: 1px dashed var(--rule-strong); border-radius: var(--r); color: var(--graphite); font-family: var(--ui); font-size: var(--t-sm); text-decoration: none; }
+.dp-wait.is-off { border-style: solid; color: var(--ink); }
+.dp-wait.is-off > .ico { color: var(--blue); flex: none; }
+.dp-wait strong { display: block; color: var(--blue); }
+.dp-wait small { display: block; color: var(--graphite); font-size: var(--t-xs); margin-top: 2px; }
+@media print { .deck-peek { display: none !important; } }

@@ -208,6 +208,25 @@ async def prep_brief(payload: dict = Body(...)):
     return {"markdown": out, **t.stats()}
 
 
+@router.post("/define-term")
+async def define_term(payload: dict = Body(...)):
+    """What does this term mean, going only by the notes that use it? A suggestion to review, never saved by itself."""
+    from ..services import glossary
+
+    term = str(payload.get("term") or "").strip()[:60]
+    if not term:
+        raise HTTPException(400, "Which term?")
+    _s, client, models = await _ready("fast")
+    found = await to_thread.run_sync(lambda: glossary.excerpts(term))
+    sources = [{"id": e["note_id"], "title": e["title"]} for e in found]
+    if not found:
+        return {"definition": "", "sources": [], "reason": "No unlocked note uses this term."}
+    res = await ai_tasks.define_term(client, models, term, found)
+    if not res["definition"]:
+        res["reason"] = "Your notes use this term but never say what it means."
+    return {**res, "sources": sources}
+
+
 @router.post("/quick")
 async def quick(payload: dict = Body(...)):
     text = (payload.get("text") or "").strip()

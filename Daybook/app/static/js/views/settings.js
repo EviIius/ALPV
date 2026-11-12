@@ -5,6 +5,9 @@ import { emitChange, getState, setState, toast, toastError, useStore } from '../
 import { navigate } from '../lib/router.js';
 import { fmtAgo, fmtBytes } from '../lib/dates.js';
 import { Field, Icon, Seg, Spinner, Switch, confirmDialog, promptDialog } from '../lib/ui.js';
+import { useRestart } from '../components/update.js';
+import { viewport } from '../lib/viewport.js';
+import { VERSION } from '../version.js';
 
 const SECTIONS = [
   ['privacy', 'Privacy & security', 'shield-check'],
@@ -459,16 +462,28 @@ function Data({ settings }) {
 // ---------------------------------------------------------------------------
 function About() {
   const [sys, setSys] = useState(null);
+  const { phase, problem, restart } = useRestart();
   useEffect(() => { get('/api/system').then(setSys).catch(toastError); }, []);
+  const busy = phase === 'checking' || phase === 'restarting';
+  const v = viewport.info;
   return html`<div class="set-section">
     <h2>About Daybook</h2>
     <p>A private, self-hosted workspace for notes, calendar, tasks and documents. Everything runs on your own hardware.</p>
     <div class="set-group">${!sys ? html`<div class="set-row"><${Spinner} /></div>` : html`
-      <${Row} title="Version">${sys.version}</${Row}>
+      <${Row} title="Version" sub=${sys.update_ready ? `Newer files are on your Mac${sys.disk_version && sys.disk_version !== sys.version ? ` (${sys.disk_version})` : ''}. Restart to use them.` : VERSION !== sys.version ? `This device is showing ${VERSION}. Reopen the app to catch up.` : null}>${sys.version}</${Row}>
+      <${Row} title="Restart Daybook" sub=${phase === 'failed' ? problem : phase === 'checking' ? 'Checking that the files on your Mac start…' : phase === 'restarting' ? 'Restarting. Back in a few seconds.'
+        : sys.restartable === false ? 'Start it with Start Daybook.command to restart it from here.' : 'Use this after an update. It checks the files first and takes a few seconds; nothing is lost.'}>
+        <button class="btn" disabled=${busy || sys.restartable === false} onClick=${restart}>${busy ? html`<span class="spinner"></span>` : html`<${Icon} name="refresh-cw" />`}Restart</button></${Row}>
       <${Row} title="Python">${sys.python}</${Row}>
       <${Row} title="System"><span class="faint" style="font-size:12px;text-align:right">${sys.platform}</span></${Row}>
       <${Row} title="Database">${fmtBytes(sys.db_bytes)}${sys.fts ? ', full-text search on' : ''}</${Row}>
       <${Row} title="Running for">${Math.round(sys.uptime_s / 3600)} h</${Row}>`}</div>
-    <p class="faint" style="font-size:12px">Open-source components: Preact, htm, TipTap and ProseMirror, marked, DOMPurify, Archivo and Literata (SIL OFL), Lucide icons, FastAPI. See app/static/vendor/THIRD_PARTY_NOTICES.txt.</p>
+    ${v ? html`<h2 style="margin-top:12px">This iPhone</h2>
+    <div class="set-group">
+      <${Row} title="Screen layout" sub=${v.gap ? `iOS leaves a ${v.gap} px strip at the bottom out of Home Screen apps (an iOS bug). Daybook's bottom bar is fitted around it.`
+        : v.standalone ? 'Normal: the app fills the screen.' : 'Opened in Safari. Add it to the Home Screen for the full-screen app.'}>
+        <span class="mono faint" style="font-size:11.5px;text-align:right">screen ${v.screen} · page ${v.window}<br />drawn ${v.laidOut} · top ${v.insetTop} · bottom ${v.insetBottom}</span></${Row}>
+    </div>` : null}
+    <p class="faint" style="font-size:12px">Open-source components: Preact, htm, TipTap and ProseMirror, marked, DOMPurify, PDF.js, Archivo, Literata and Carlito (SIL OFL), Lucide icons, FastAPI. See app/static/vendor/THIRD_PARTY_NOTICES.txt.</p>
   </div>`;
 }

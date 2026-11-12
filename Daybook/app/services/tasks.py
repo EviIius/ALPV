@@ -6,6 +6,8 @@ from datetime import date, datetime, timedelta
 
 from .. import db
 from ..bus import changed
+from dateutil.rrule import rrulestr
+
 from ..util import local_now, new_id, now_ms, today_str
 
 PRIORITY = {"none": 0, "low": 1, "medium": 2, "med": 2, "high": 3}
@@ -50,6 +52,8 @@ def _validate(data: dict, partial: bool = False) -> dict:
     if "remind" in data:
         r = data.get("remind")
         v["remind"] = None if r in (None, "", "none") else max(0, int(r))
+    if "repeat" in data:
+        v["repeat"] = normalize_repeat(data.get("repeat"))
     if "note_id" in data:
         nid = data.get("note_id") or None
         if nid and not db.q1("SELECT id FROM notes WHERE id = ?", (nid,)):
@@ -59,6 +63,44 @@ def _validate(data: dict, partial: bool = False) -> dict:
         v["done"] = 1 if data.get("done") else 0
         v["done_at"] = now_ms() if data.get("done") else None
     return v
+
+
+REPEATS = {
+    "daily": "FREQ=DAILY", "weekdays": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", "weekly": "FREQ=WEEKLY",
+    "biweekly": "FREQ=WEEKLY;INTERVAL=2", "monthly": "FREQ=MONTHLY", "quarterly": "FREQ=MONTHLY;INTERVAL=3", "yearly": "FREQ=YEARLY",
+}
+
+
+def normalize_repeat(value) -> str | None:
+    """A repeat as an iCalendar rule ("FREQ=MONTHLY"), from a rule or a plain word such as "monthly"."""
+    if value in (None, "", "none", False):
+        return None
+    rule = REPEATS.get(str(value).strip().lower(), str(value).strip().upper().removeprefix("RRULE:"))
+    if not rule.startswith("FREQ=") or len(rule) > 200 or "COUNT=" in rule or "UNTIL=" in rule:
+        raise ValueError("That repeat isn't one Daybook understands.")
+    try:
+        rrulestr(rule, dtstart=datetime(2020, 1, 1))
+    except (ValueError, TypeError) as exc:
+        raise ValueError("That repeat isn't one Daybook understands.") from exc
+    return rule
+
+
+def next_due(repeat: str, due: str | None, today: date | None = None) -> str:
+    """The due date after `due` for a repeating task. A long-overdue task skips ahead to the
+    next date from today on instead of piling up missed ones. A monthly repeat stays on its
+    day of the month (the 31st falls back to the month's last day)."""
+    today = today or date.fromisoformat(today_str())
+    base = date.fromisoformat(due) if due else today
+    rule = repeat
+    if rule.startswith("FREQ=MONTHLY") and "BYMONTHDAY" not in rule and "BYDAY" not in rule and base.day > 28:
+        rule += f";BYMONTHDAY={','.join(str(d) for d in range(28, base.day + 1))};BYSETPOS=-1"
+    rr = rrulestr(rule, dtstart=datetime.combine(base, datetime.min.time()))
+    nxt = rr.after(datetime.combine(base, datetime.min.time()))
+    if nxt is None:
+        return (base + timedelta(days=1)).isoformat()
+    if nxt.date() < today:
+        nxt = rr.after(datetime.combine(today - timedelta(days=1), datetime.min.time())) or nxt
+    return nxt.date().isoformat()
 
 
 def get(task_id: str) -> dict:
@@ -86,15 +128,32 @@ def create(data: dict, emit: bool = True) -> dict:
 
 
 def update(task_id: str, data: dict) -> dict:
-    get(task_id)
+    before = get(task_id)
     v = _validate(data, partial=True)
     if not v:
-        return get(task_id)
+        return before
     v["updated_at"] = now_ms()
+    # Ticking off a repeating task finishes this one and puts the next one on the list.
+    repeat = v.get("repeat", before.get("repeat"))
+    spawn = bool(v.get("done")) and not before["done"] and bool(repeat)
+    nxt = None
     with db.tx() as c:
+        if spawn:
+            v["repeat"] = None   # the finished copy doesn't repeat again if it's reopened
+            due = next_due(repeat, v.get("due_date", before["due_date"]))
+            cur = {**before, **v}
+            nid, ts = new_id(), now_ms()
+            c.execute("""INSERT INTO tasks(id, title, details, list, priority, due_date, due_time, remind, note_id, repeat, done, sort, created_at, updated_at)
+                         VALUES (?,?,?,?,?,?,?,?,?,?,0,?,?,?)""",
+                      (nid, cur["title"], cur["details"], cur["list"], cur["priority"], due, cur["due_time"], cur["remind"],
+                       cur["note_id"], repeat, before["sort"], ts, ts))
+            nxt = nid
         c.execute(f"UPDATE tasks SET {', '.join(f'{k} = ?' for k in v)} WHERE id = ?", (*v.values(), task_id))
     changed("tasks", task_id)
-    return get(task_id)
+    out = get(task_id)
+    if nxt:
+        out["next"] = get(nxt)
+    return out
 
 
 def delete(task_id: str) -> None:

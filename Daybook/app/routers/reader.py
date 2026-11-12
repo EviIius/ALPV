@@ -2,11 +2,13 @@
 it, and highlights/comments (plus gathering them into a note)."""
 from __future__ import annotations
 
+import gzip
+import json
 from urllib.parse import quote
 
 from anyio import to_thread
-from fastapi import APIRouter, Body
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Body, Request
+from fastapi.responses import FileResponse, Response
 
 from ..services import reader
 
@@ -23,9 +25,20 @@ def reader_manifest(note_id: str):
 
 
 @router.get("/reader/{note_id}/slides")
-async def reader_slides(note_id: str):
+async def reader_slides(note_id: str, request: Request, limit: int | None = None):
     # Drawing a large deck the first time takes a moment; keep the server responsive.
-    return await to_thread.run_sync(reader.deck, note_id)
+    def work() -> tuple[bytes, bool]:
+        body = json.dumps(reader.deck(note_id, limit), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        # A big deck is over a megabyte of markup; squeezed it's about a tenth, which matters on a phone.
+        if len(body) > 4096 and "gzip" in request.headers.get("accept-encoding", "").lower():
+            return gzip.compress(body, 6), True
+        return body, False
+
+    body, packed = await to_thread.run_sync(work)
+    headers = {"Vary": "Accept-Encoding"}
+    if packed:
+        headers["Content-Encoding"] = "gzip"
+    return Response(body, media_type="application/json", headers=headers)
 
 
 @router.get("/reader/{note_id}/media/{name}")

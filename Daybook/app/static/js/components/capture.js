@@ -85,7 +85,7 @@ export function Capture({ autofocus = false, onDone, placeholder }) {
     if (kind !== 'note' && parsed.date) chips.push(fmtDayRelative(parsed.date));
     if (kind === 'event') chips.push(parsed.all_day || !parsed.start_time ? 'All day' : `${fmtTime(parsed.start_time)} – ${fmtTime(parsed.end_time)}`);
     if (kind === 'task' && parsed.start_time) chips.push(fmtTime(parsed.start_time));
-    if (kind === 'event' && parsed.rrule) chips.push(RRULE_TEXT(parsed.rrule));
+    if ((kind === 'event' || kind === 'task') && parsed.rrule) chips.push(RRULE_TEXT(parsed.rrule));
     if (parsed.location) chips.push(parsed.location);
     if (kind === 'task' && parsed.priority && parsed.priority !== 'none') chips.push(`${parsed.priority} priority`);
     for (const t of parsed.tags || []) chips.push(`#${t}`);

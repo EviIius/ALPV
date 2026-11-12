@@ -41,7 +41,7 @@ Daybook reads the files in your library folder **in place** and never sends them
 - **Locked notes are never sent to AI**, even a local one.
 - **Dating files with AI** sends only the file name, title, the clues found by rules and the first ~3,500 characters, and only to your local model. AI picks are applied only when the date also appears in the file's own clues or text.
 - **Remote images are blocked** when notes are displayed, so imported emails and web pages can't load tracking pixels.
-- **The glossary is built by rules on this Mac.** Your local AI and local transcription receive only the terms that matter for the material in front of them.
+- **The glossary is built by rules on this Mac.** Your local AI and local transcription receive only the terms that matter for the material in front of them. When you ask for a suggested definition, the local AI is shown short passages from unlocked notes that use the term, and nothing else.
 
 ### Optional things that do leave your computer
 
@@ -50,6 +50,7 @@ Daybook reads the files in your library folder **in place** and never sends them
 | ntfy push | Yes | With **Hide details** on (the default), only "An event is coming up at 3:00 PM". Self-host ntfy on your tailnet to keep even that private. |
 | Discord webhook | Yes | Same redacted text unless you turn redaction off. |
 | Model downloads (`ollama pull`, mlx-whisper) | You run them | Model weights are downloaded. None of your data is uploaded. |
+| Python packages (`pip`) | On first start, and when `requirements.txt` changed and you start or restart Daybook | Package names are sent to PyPI and the packages are downloaded. None of your data is uploaded. The rehearsal before an in-app restart copies your database to Daybook's own `tmp` folder and deletes the copy when it's done. |
 | Tailscale HTTPS certificate | You run `tailscale serve` | Your machine and tailnet names appear in public certificate logs. No content does. |
 | Phone calendar feed | Yes | Your events (full details, titles only, or just "Busy", your choice) to whoever has the feed's secret address. Daybook only answers it on this Mac, your tailnet or your home network, never the public internet, and it isn't cached by the app. Subscribe on the phone itself: a calendar added through iCloud would be fetched by Apple's servers. **Reset link** makes the old address stop working; turning the feed off stops it completely. |
 

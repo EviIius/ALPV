@@ -15,6 +15,8 @@ const state = {
   vault: null,         // vault passphrase held in memory only while unlocked
   library: null,       // /api/library/status
   dateDialog: null,
+  server: null,        // /api/health: version running on the Mac, and whether newer files are waiting
+  pagesUpdated: false, // this device fetched newer pages while it was open
 };
 const listeners = new Set();
 

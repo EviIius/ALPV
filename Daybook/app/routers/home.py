@@ -117,7 +117,7 @@ def quick_create(payload: dict = Body(...)):
         tags = payload.get("tags") or []
         t = tasks.create({"title": payload.get("title"), "due_date": payload.get("date"),
                           "due_time": payload.get("start_time"), "priority": payload.get("priority") or 0,
-                          "list": tags[0].capitalize() if tags else None})
+                          "list": tags[0].capitalize() if tags else None, "repeat": payload.get("rrule")})
         return {"type": "task", "item": t}
     if kind == "note":
         n = notes.create(title=payload.get("title") or "", body=payload.get("body") or "", tags=payload.get("tags"))

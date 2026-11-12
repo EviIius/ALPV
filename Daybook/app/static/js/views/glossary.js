@@ -3,7 +3,7 @@
 // definitions always win.
 import { html, useEffect, useRef, useState } from '/vendor/preact.js';
 import { del, get, post, put, qs } from '../lib/api.js';
-import { toast, toastError, useChanges } from '../lib/store.js';
+import { toast, toastError, useChanges, useStore } from '../lib/store.js';
 import { fmtAgo } from '../lib/dates.js';
 import { Empty, Icon, Modal, Seg, Spinner, useDebounced } from '../lib/ui.js';
 import { resetGlossaryMap } from '../components/termpeek.js';
@@ -103,6 +103,16 @@ function TermEditor({ it, onClose, onSaved }) {
   const [definition, setDefinition] = useState(it.definition || '');
   const [aliases, setAliases] = useState((it.aliases || []).join(', '));
   const [saving, setSaving] = useState(false);
+  const ai = useStore((s) => s.ai);
+  const [hint, setHint] = useState(null);          // { busy } | { definition, sources, model, ms } | { reason }
+  const suggest = async () => {
+    setHint({ busy: true });
+    try {
+      const r = await post('/api/ai/define-term', { term: term.trim() || it.term });
+      setHint(r);
+      if (r.definition) setDefinition(r.definition);
+    } catch (err) { setHint(null); toastError(err); }
+  };
   const save = async (e) => {
     e && e.preventDefault();
     if (!term.trim()) return;
@@ -120,6 +130,13 @@ function TermEditor({ it, onClose, onSaved }) {
       <label class="field"><span>Term</span><input class="input" value=${term} maxlength="60" onInput=${(e) => setTerm(e.currentTarget.value)} placeholder="e.g. DPC" autofocus=${it.isNew} /></label>
       <label class="field"><span>What it means</span><textarea class="textarea" rows="3" maxlength="400" value=${definition}
         onInput=${(e) => setDefinition(e.currentTarget.value)} placeholder="e.g. Data private cloud: the bank's on-premises data platform"></textarea></label>
+      ${ai?.ok && (it.uses || !it.isNew) ? html`<div class="gl-suggest">
+        <button type="button" class="btn btn-sm" onClick=${suggest} disabled=${hint?.busy || !term.trim()}>
+          ${hint?.busy ? html`<span class="spinner"></span>` : html`<${Icon} name="sparkles" />`}${definition.trim() ? 'Suggest another from my notes' : 'Suggest from my notes'}</button>
+        ${hint && !hint.busy ? html`<p class="hint">${hint.definition
+          ? html`Suggested by your local AI${hint.model ? html` (${hint.model}, ${(hint.ms / 1000).toFixed(1)}s)` : ''} from ${hint.sources.slice(0, 3).map((n, i) => html`${i ? ', ' : ''}<a href=${`#/notes/${n.id}`} onClick=${onClose}>${n.title}</a>`)}${hint.sources.length > 3 ? ` and ${hint.sources.length - 3} more` : ''}. Check it before you save.`
+          : hint.reason}</p>` : null}
+      </div>` : null}
       <label class="field"><span>Sounds like</span><input class="input" value=${aliases} onInput=${(e) => setAliases(e.currentTarget.value)} placeholder="e.g. Gizmo, Gismos" />
         <span class="hint">How transcripts write it, separated by commas. Daybook offers to fix these in your notes, helps local Whisper spell the term, and tells the local AI what they mean.</span></label>
       ${!it.isNew && it.origin !== 'user' ? html`<p class="hint faint">Saving makes this definition yours; rescans won't change it.</p>` : null}

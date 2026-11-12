@@ -12,14 +12,14 @@ Daybook lives inside the **ALPV** repository (`ALPV/Daybook/`) and reads the res
 - **Dates for everything.** A date scrubber reads file names (`…_Notes_2026-10-23.docx`, `2026-10-23_143032_000.txt`, `…_Nov17-18_…pptx`), "Meeting date" lines, the top of each document, document properties and git history, and files each item on its day, with the meeting time when it can find one. Anything it isn't sure about waits in **Needs a date**, where you, your local AI or Claude decide. Decisions are saved next to the files in `.daybook/dates.json`.
 - **Meeting intelligence, no AI needed.** Attendees, decisions, action items and open questions are read from your meeting notes. That gives you a **decisions log**, **follow-ups** you can turn into tasks, a **people** index, recordings linked to the notes made from them, and deck **versions** you can compare.
 - **Reader for decks, PDFs and spreadsheets.** PowerPoint files are drawn as real slides (layouts, theme colours, shapes, tables, charts, pictures, speaker notes), PDFs page by page, and spreadsheets as tables, all inside Daybook, offline, with no Office install or cloud viewer. Highlight and comment, find in a document, present full screen with your speaker notes, and save your highlights as a note. Search looks **inside** every deck and PDF and opens the right slide or page.
-- **Glossary.** Daybook reads your notes for what acronyms stand for ("Data private cloud (DPC)", glossary tables) and for how transcripts mishear them (`Readings used: FCRM ("FICRAM")`). Select a term anywhere to see its meaning, fix mishearings in a note with one click, and your local AI and local transcription get the right spellings.
+- **Glossary.** Daybook reads your notes for what acronyms stand for ("Data private cloud (DPC)", glossary tables) and for how transcripts mishear them (`Readings used: FCRM ("FICRAM")`). Select a term anywhere to see its meaning, fix mishearings in a note with one click, and your local AI and local transcription get the right spellings. For terms your notes never define, the local AI can suggest a meaning from the passages that use them.
 - **Meeting prep.** One click on an event gathers the people, last meeting, open action items, decisions, questions and decks that relate to it, plus an optional brief from your local model.
 - **Search operators and saved searches.** `in:Kelly type:deck after:2026-10 person:Jacqueline has:actions -draft "storage costs"`, saved to the sidebar.
 - **Phone calendar.** A private calendar address your iPhone's Calendar app can subscribe to. It only answers on this Mac, your tailnet or your home network, and can show full details, titles only or just "Busy".
 - **Make time for tasks.** Daybook finds open stretches on your calendar for a task and books the one you pick. **Look back** on Today shows what you wrote a week, a month and a year ago.
 - **Notes.** A rich editor that saves notes as plain Markdown. Includes checklists, tables, images, notebooks, tags, `[[links]]` between notes with backlinks, full-text search, version history, trash, templates and daily notes.
 - **Calendar.** Month, week, day and agenda views. Repeating events with "this / following / all" edits. Reminders that actually fire. `.ics` import and export.
-- **Tasks.** Plain-language capture ("Send cost deck Friday !high #work"), due dates, priorities, lists and reminders.
+- **Tasks.** Plain-language capture ("Send cost deck Friday !high #work"), due dates, priorities, lists, reminders and repeats (ticking off a repeating task creates the next one).
 - **Today.** Your date, schedule, what's due and recent notes, plus a box that understands "Lunch with Kelly tomorrow 12:30".
 - **Import documents.** Word, PDF, PowerPoint, Excel, CSV, email, HTML, Markdown, images and audio become notes. Use the upload page, or just save files into the `~/Notes Inbox` folder. The original file stays attached to each note.
 - **Local AI (optional).** Works with [Ollama](https://ollama.com) or [LM Studio](https://lmstudio.ai). It can:
@@ -75,6 +75,8 @@ Open Daybook in the same browser you used before. It will offer to bring over th
    Tailscale's certificates are public records, so your machine and tailnet names appear in certificate logs. Your traffic and data don't.
 
    With HTTPS through `tailscale serve`, you can make Daybook unreachable from your Wi-Fi entirely by running `./start.sh --localhost-only`. Tailscale forwards to it locally.
+
+   **On an iPhone, add it to the Home Screen** (Share → Add to Home Screen) for the full-screen app. iOS 26 and later lay Home Screen apps with a see-through status bar out a little short of the bottom of the screen; Daybook uses a solid status bar for newly added icons to avoid that, and fits its bottom bar around the gap on icons added earlier (Settings → About shows what it measured).
 
    If another app on the Mac already uses Tailscale's default HTTPS port, give Daybook its own: `tailscale serve --bg --https=8443 8000`, then open `https://<your-mac>.<your-tailnet>.ts.net:8443`.
 
@@ -171,6 +173,12 @@ Optional extras, all on-device:
 
 Older `.doc`, `.rtf` and `.odt` files are converted with macOS's built-in `textutil`.
 
+## Updating
+
+When Daybook's files change while it runs (a `git pull`, or an assistant writing a new version into the folder), every signed-in device shows **Update ready**. **Restart now** first rehearses the new version (it installs changed requirements, loads every module and applies database changes to a throwaway copy of your database), then restarts the server in a few seconds, in the same window and at the same address. If the rehearsal fails, Daybook keeps running as it was and tells you why. You can also restart from **Settings → About**, or on the Mac by double-clicking **`Restart Daybook.command`**.
+
+The pages themselves are read from disk, so a phone can show new screens before the server has restarted; until it has, those screens say that Daybook needs a restart instead of "Not Found".
+
 ## Keep it running (always on)
 
 ```bash
@@ -248,7 +256,8 @@ The suite covers:
 - the `daybook-dates` command
 - the reader: slides drawn from real `.pptx` features, PDF and sheet pages, page-level search, highlights, and what locking removes
 - meeting prep, the phone calendar feed (and that it refuses public addresses), search operators and saved searches
-- the glossary (definitions and readings found by rule, your own terms, "sounds like" fixes), making time for tasks and Look back
+- the glossary (definitions and readings found by rule, your own terms, "sounds like" fixes, suggestions from notes only), making time for tasks, repeating tasks and Look back
+- updating: noticing newer files, the start-up rehearsal, and a real in-place restart of the server
 
 ## License
 

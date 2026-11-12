@@ -425,6 +425,35 @@ def invalidate() -> None:
 # ---------------------------------------------------------------------------
 # Reading and editing
 # ---------------------------------------------------------------------------
+def excerpts(term: str, limit: int = 6, width: int = 380) -> list[dict]:
+    """Passages from unlocked notes that use a term: the evidence the local AI may read to suggest a meaning."""
+    term = (term or "").strip()
+    if not term:
+        return []
+    pat = re.compile(r"(?<![\w&])" + re.escape(term) + r"(?:s|'s)?(?![\w&])", re.I if not term.isupper() else 0)
+    rows = db.q("""SELECT id, title, body FROM notes WHERE trashed_at IS NULL AND locked = 0
+                   AND (body LIKE ? OR title LIKE ?) ORDER BY updated_at DESC LIMIT 60""", (f"%{term}%", f"%{term}%"))
+    out = []
+    for r in rows:
+        body = r["body"] or ""
+        m = pat.search(body)
+        if not m:
+            continue
+        start = max(0, m.start() - width // 2)
+        end = min(len(body), m.end() + width // 2)
+        if start:
+            start = body.find(" ", start, m.start()) + 1 or start
+        if end < len(body):
+            end = body.rfind(" ", m.end(), end) if body.rfind(" ", m.end(), end) > 0 else end
+        text = re.sub(r"\s+", " ", body[start:end]).strip()
+        if len(text) < len(term) + 12:
+            continue
+        out.append({"note_id": r["id"], "title": r["title"] or "Untitled", "text": text})
+        if len(out) >= limit:
+            break
+    return out
+
+
 def to_api(r: dict) -> dict:
     return {"term": r["term"], "definition": r["definition"], "aliases": json.loads(r["aliases"] or "[]"),
             "origin": r["origin"], "hidden": bool(r["hidden"]), "uses": r["uses"], "note_count": r["note_count"],

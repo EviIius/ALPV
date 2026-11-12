@@ -9,6 +9,7 @@ import {
 } from '../lib/ui.js';
 import { openEventEditor } from './calendar.js';
 import { TermFixes } from './glossary.js';
+import { DeckPeek } from '../components/deckpeek.js';
 import { DateChip, SOURCE, WhyDate, dateMenu, dateText, kindOf, openDateDialog, useIsLocal } from '../lib/library.js';
 
 const VIEW_LABELS = { all: 'All notes', pinned: 'Pinned', daily: 'Daily notes', library: 'Library files', review: 'Needs a date', dated: 'On the calendar', imported: 'Imported', locked: 'Locked', archived: 'Archive', trash: 'Trash' };
@@ -486,6 +487,7 @@ function NoteEditor({ id, params, narrow }) {
             <strong>This note changed on another device.</strong> Your edits haven't been saved yet.
             <div class="row" style="margin-top:8px"><button class="btn btn-sm" onClick=${async () => { dirty.current = false; const n = await load(); if (n && edRef.current) edRef.current.setMarkdown(n.body); if (titleRef.current && n) titleRef.current.value = n.title; setConflict(null); setStatus('saved'); }}>Load the latest version</button>
             <button class="btn btn-sm btn-primary" onClick=${() => { dirty.current = true; save({ force: true }); }}>Keep my version</button></div></div></div>` : null}
+          ${!trashed && !note.locked && readable(note) === 'slides' ? html`<${DeckPeek} note=${note} />` : null}
           <div class="note-head">
             <div class="header-block">
               <div class="cell"><span class="label">${note.lib_path || note.lib_pending ? 'Folder' : 'Notebook'}</span>
@@ -517,14 +519,15 @@ function NoteEditor({ id, params, narrow }) {
         </div>
       </div>
       <div class="editor-status" role="status">
-        <span class=${status === 'saved' ? 'saved' : status === 'saving' ? 'saving' : status === 'error' || status === 'conflict' ? 'error' : ''}>
-          ${{ saved: 'Saved', saving: 'Saving…', unsaved: 'Editing…', error: "Couldn't save — retrying when you type", conflict: 'Not saved: conflict' }[status]}</span>
-        <span>Edited ${fmtAgo(note.updated_at)}</span>
-        ${note.lib ? html`<span class="row" style="gap:4px"><${Icon} name="folder" size="sm" />${note.editable === false ? `Read-only copy of ${note.lib.filename}` : `Saved to ${note.lib.library}/${note.lib.path}`}</span>`
-          : note.lib_pending ? html`<span class="row" style="gap:4px"><${Icon} name="folder" size="sm" />Saved to your library when you start writing</span>`
-            : note.source_name ? html`<span>Imported from ${note.source_name}</span>` : null}
+        ${note.editable === false ? html`<span>Read-only</span>`
+          : html`<span class=${status === 'saved' ? 'saved' : status === 'saving' ? 'saving' : status === 'error' || status === 'conflict' ? 'error' : ''}>
+          ${{ saved: 'Saved', saving: 'Saving…', unsaved: 'Editing…', error: "Couldn't save — retrying when you type", conflict: 'Not saved: conflict' }[status]}</span>`}
+        <span>${note.editable === false ? 'Changed' : 'Edited'} ${fmtAgo(note.updated_at)}</span>
+        ${note.lib ? html`<span class="es-file" title=${`${note.lib.library}/${note.lib.path}`}><${Icon} name="folder" size="sm" /><span class="t">${note.editable === false ? note.lib.filename : `Saved to ${note.lib.library}/${note.lib.path}`}</span></span>`
+          : note.lib_pending ? html`<span class="es-file"><${Icon} name="folder" size="sm" /><span class="t">Saved to your library when you start writing</span></span>`
+            : note.source_name ? html`<span class="es-file"><span class="t">Imported from ${note.source_name}</span></span>` : null}
         ${note.locked ? html`<span class="row" style="gap:4px"><${Icon} name="lock" size="sm" />Encrypted</span>` : null}
-        ${book ? html`<span class="row" style="gap:4px;margin-left:auto"><span class="swatch" style=${`background:${book.color}`}></span>${book.name}</span>` : null}
+        ${book ? html`<span class="row es-book" style="gap:4px"><span class="swatch" style=${`background:${book.color}`}></span>${book.name}</span>` : null}
       </div>
     </div>
     ${panel && !trashed ? html`<${SidePanel} which=${panel} setWhich=${togglePanel} note=${note} ed=${ed} id=${id} assist=${assistAction} onClose=${() => togglePanel(panel)} ai=${ai} save=${save} reload=${load} />` : null}
@@ -882,7 +885,7 @@ function FileBar({ note, narrow, onAi, onMore, onPanel, panelOpen }) {
       <button class="tb tb-text" type="button" onClick=${() => open('reveal')} title="Show in Finder"><${Icon} name="folder-open" />${narrow ? '' : 'Show in Finder'}</button>` : null}
     <a class="tb tb-text" href=${`${lib.url}&download=true`} title="Download the original"><${Icon} name="download" />${narrow ? '' : 'Download'}</a>
     <span class="tb-sep"></span>
-    <a class="tb tb-text tb-read" href=${`#/read/${note.id}`} title=${readable(note) ? `Read the ${readable(note)} as it looks, with highlights` : 'Read and highlight'}><${Icon} name="book-open" />${narrow ? '' : (note.lib_kind === 'deck' ? 'Slides' : 'Read')}</a>
+    <a class="tb tb-text tb-read" href=${`#/read/${note.id}`} title=${readable(note) ? `Read the ${readable(note)} as it looks, with highlights` : 'Read and highlight'}><${Icon} name=${note.lib_kind === 'deck' ? 'presentation' : 'book-open'} />${note.lib_kind === 'deck' ? 'Slides' : note.lib_kind === 'pdf' ? 'Pages' : note.lib_kind === 'sheet' ? 'Table' : 'Read'}</a>
     <button class="tb tb-text tb-ai" type="button" onClick=${onAi} title="Local AI assist"><${Icon} name="sparkles" />${narrow ? '' : 'Assist'}</button>
     <span style="flex:1"></span>
     ${narrow ? null : html`<button class="tb" type="button" title=${panelOpen ? 'Hide side panel' : 'Show side panel'} aria-pressed=${panelOpen ? 'true' : 'false'} onClick=${onPanel}><${Icon} name="panel-left" /></button>`}

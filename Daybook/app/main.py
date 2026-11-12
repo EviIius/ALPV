@@ -190,15 +190,20 @@ def create_app(data_dir: Path | None = None, *, background: bool = True) -> Fast
     ]:
         app.add_exception_handler(cls, _err(status, fallback))
 
-    from .routers import ai, auth, calendar, feed, glossary, home, imports, library, notes, reader, settings, tasks
+    from .routers import ai, auth, calendar, feed, glossary, home, imports, library, notes, reader, settings, tasks, updates
 
     for r in (auth.router, notes.router, calendar.router, tasks.router, home.router, imports.router, ai.router, settings.router,
-              library.router, reader.router, feed.router, glossary.router):
+              library.router, reader.router, feed.router, glossary.router, updates.router):
         app.include_router(r)
 
     @app.get("/api/health")
     def health():
-        return {"status": "ok", "app": APP_NAME, "version": __version__}
+        # Also says whether newer code is waiting on disk, so any signed-in device can offer a restart.
+        from .services import updates as updates_svc
+
+        st = updates_svc.status()
+        return {"status": "ok", "app": APP_NAME, "version": __version__, "update_ready": st["update_ready"],
+                "restartable": st["restartable"], "started_at": st["started_at"]}
 
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
     app.add_middleware(GuardMiddleware)

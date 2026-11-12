@@ -1,6 +1,6 @@
 // Daybook service worker: caches the app shell so it opens instantly and
 // offline. API responses (your notes) are never cached here.
-const VERSION = 'daybook-2.2.0';
+const VERSION = 'daybook-2.2.2';
 const SHELL = ['/', '/index.html', '/css/base.css', '/css/app.css', '/css/editor.css', '/css/reader.css', '/js/theme.js', '/js/main.js',
   '/vendor/preact.js', '/vendor/md.js', '/icons/sprite.svg', '/manifest.webmanifest'];
 

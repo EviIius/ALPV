@@ -16,8 +16,9 @@ export function TaskRow({ task, onToggle, showList = true }) {
     <input type="checkbox" class=${`check prio-${task.priority}`} checked=${task.done} onChange=${onToggle} aria-label=${`Mark "${task.title}" ${task.done ? 'not done' : 'done'}`} />
     <div class="grow" onClick=${() => openTaskEditor(task)} role="button" tabindex="0" onKeyDown=${(e) => { if (e.key === 'Enter') openTaskEditor(task); }}>
       <div class="task-title">${task.priority > 0 ? html`<span class=${`prio-flag p${task.priority}`}>${'!'.repeat(task.priority)} </span>` : null}${task.title}</div>
-      ${task.due_date || task.list || task.note_id || task.details || task.blocked_at ? html`<div class="task-meta">
+      ${task.due_date || task.list || task.note_id || task.details || task.blocked_at || task.repeat ? html`<div class="task-meta">
         ${task.due_date ? html`<span class=${overdue ? 'overdue' : ''}>${overdue ? 'Overdue, ' : ''}${fmtDayRelative(task.due_date)}${task.due_time ? `, ${fmtTime(task.due_time)}` : ''}</span>` : null}
+        ${task.repeat && !task.done ? html`<span class="row" style="gap:3px" title="Repeats"><${Icon} name="repeat" size="sm" />${RRULE_TEXT(task.repeat)}</span>` : null}
         ${task.remind !== null && task.remind !== undefined ? html`<${Icon} name="bell" size="sm" />` : null}
         ${task.blocked_at && !task.done ? html`<span class="row" style="gap:3px" title="Time set aside on your calendar"><${Icon} name="calendar-check" size="sm" />${fmtDayRelative(task.blocked_at.slice(0, 10))}, ${fmtTime(task.blocked_at.slice(11, 16))}</span>` : null}
         ${showList && task.list ? html`<span class="chip">${task.list}</span>` : null}
@@ -63,8 +64,9 @@ export function TasksView({ route }) {
   };
   const toggle = async (t) => {
     try {
-      await put(`/api/tasks/${t.id}`, { done: !t.done });
-      if (!t.done) toast(`Done: ${t.title}`, { action: { label: 'Undo', run: async () => { await put(`/api/tasks/${t.id}`, { done: false }); emitChange({ entity: 'tasks' }); } } });
+      const res = await put(`/api/tasks/${t.id}`, { done: !t.done });
+      if (res.next) toast(`Done. Next one is due ${fmtDayRelative(res.next.due_date)}.`);
+      else if (!t.done) toast(`Done: ${t.title}`, { action: { label: 'Undo', run: async () => { await put(`/api/tasks/${t.id}`, { done: false }); emitChange({ entity: 'tasks' }); } } });
       emitChange({ entity: 'tasks' });
     } catch (err) { toastError(err); }
   };
@@ -121,6 +123,7 @@ function TaskEditor({ initial, onClose }) {
   const [f, setF] = useState({
     title: initial.title || '', details: initial.details || '', due_date: initial.due_date || '', due_time: initial.due_time || '',
     priority: initial.priority || 0, list: initial.list || '', remind: initial.remind ?? null, note_id: initial.note_id || null, done: !!initial.done,
+    repeat: initial.repeat || '',
   });
   const [busy, setBusy] = useState(false);
   const set = (p) => setF((x) => ({ ...x, ...p }));
@@ -153,6 +156,12 @@ function TaskEditor({ initial, onClose }) {
         ${[['Today', 0], ['Tomorrow', 1], ['Next week', 7]].map(([l, n]) => html`<button type="button" class="chip chip-btn" onClick=${() => { const d = new Date(); d.setDate(d.getDate() + n); set({ due_date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }); }}>${l}</button>`)}
         <button type="button" class="chip chip-btn" onClick=${() => set({ due_date: '', due_time: '' })}>No date</button>
       </div>
+      <${Field} label="Repeat" hint=${f.repeat ? 'When you tick it off, the next one appears with its new due date.' : null}>
+        <select class="select" value=${f.repeat} onChange=${(e) => set({ repeat: e.currentTarget.value })}>
+          <option value="">Doesn't repeat</option>
+          ${REPEAT_CHOICES.map(([v, l]) => html`<option value=${v}>${l}</option>`)}
+          ${f.repeat && !REPEAT_CHOICES.some(([v]) => v === f.repeat) ? html`<option value=${f.repeat}>${RRULE_TEXT(f.repeat) || f.repeat}</option>` : null}
+        </select></${Field}>
       <${Field} label="Priority"><${Seg} value=${f.priority} onChange=${(v) => set({ priority: v })} options=${PRIO_LABEL.map((l, i) => ({ value: i, label: l }))} /></${Field}>
       <div class="grid-2">
         <${Field} label="List"><input class="input" value=${f.list} placeholder="e.g. Work, Errands" onInput=${(e) => set({ list: e.currentTarget.value })} /></${Field}>
@@ -165,6 +174,17 @@ function TaskEditor({ initial, onClose }) {
       ${!isNew && !f.done ? html`<${BlockTime} task=${initial} onBlocked=${onClose} />` : null}
     </form>
   </${Modal}>`;
+}
+
+const REPEAT_CHOICES = [['FREQ=DAILY', 'Every day'], ['FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', 'Every weekday'], ['FREQ=WEEKLY', 'Every week'],
+  ['FREQ=WEEKLY;INTERVAL=2', 'Every 2 weeks'], ['FREQ=MONTHLY', 'Every month'], ['FREQ=MONTHLY;INTERVAL=3', 'Every 3 months'], ['FREQ=YEARLY', 'Every year']];
+function RRULE_TEXT(r) {
+  const hit = REPEAT_CHOICES.find(([v]) => v === r);
+  if (hit) return hit[1];
+  const m = /FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)(?:;INTERVAL=(\d+))?/.exec(r || '');
+  if (!m) return 'Repeats';
+  const unit = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', YEARLY: 'year' }[m[1]];
+  return m[2] && m[2] !== '1' ? `Every ${m[2]} ${unit}s` : `Every ${unit}`;
 }
 
 // Set time aside for a task: Daybook finds open stretches on your calendar for that day.

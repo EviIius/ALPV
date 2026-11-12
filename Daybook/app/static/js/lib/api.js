@@ -43,7 +43,17 @@ export async function api(path, { method = 'GET', body, form, signal, raw = fals
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = null; }
-  if (!res.ok) throw new ApiError(res.status, (data && data.detail) || `Request failed (${res.status})`, data);
+  if (!res.ok) {
+    // FastAPI answers a bare "Not Found" only for an address it doesn't know at all: the server is
+    // older than these pages (updated on disk, not restarted yet). Say so instead of "Not Found".
+    if (res.status === 404 && data && data.detail === 'Not Found' && path.startsWith('/api/')) {
+      const err = new ApiError(404, "Daybook on your Mac needs a restart to finish updating. Until then this page can't load.", data);
+      err.missing = true;
+      try { window.dispatchEvent(new CustomEvent('daybook:missing', { detail: path })); } catch { /* ignore */ }
+      throw err;
+    }
+    throw new ApiError(res.status, (data && data.detail) || `Request failed (${res.status})`, data);
+  }
   return data;
 }
 

@@ -62,6 +62,8 @@ def _answer(messages: list[dict], fmt) -> str:
         return "- Added a storage slide\n- Removed the old timeline"
     if "Summarize this note" in user:
         return "<think>Let me read.</think>**In short:** The team plans to cut SAS storage costs.\n\n**Key points**\n- Storage grew 18%\n- 42 unused seats"
+    if "means or stands for" in user:
+        return "UNKNOWN" if "ZZQ" in user else "<think>Reading.</think>**DPC** stands for the data private cloud, the on-premises data platform."
     if "excerpts" in user:
         return "You decided to archive datasets older than 24 months [1]. Storage grew 18% [1]."
     if "briefing" in user.lower():

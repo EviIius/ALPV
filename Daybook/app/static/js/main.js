@@ -20,6 +20,8 @@ import { DateDialogHost } from './lib/library.js';
 import { CommandPalette } from './components/palette.js';
 import { CaptureModal } from './components/capture.js';
 import { PrepHost } from './components/prep.js';
+import './lib/viewport.js';
+import { UpdateNotice, checkServer } from './components/update.js';
 import { TermPeek } from './components/termpeek.js';
 
 // ---------------------------------------------------------------------------
@@ -280,7 +282,7 @@ function Shell() {
         emitChange({ entity: 'imports', job: evt.job });
         if (evt.job.status === 'done' && evt.job.note_id) emitChange({ entity: 'notes', id: evt.job.note_id });
       }
-    }, (live) => setState({ live }));
+    }, (live) => { setState({ live }); if (live) checkServer(); });
     const timer = setInterval(refreshCounts, 5 * 60 * 1000);
     setTimeout(offerLegacyImport, 800);
     return () => { stop(); clearInterval(timer); };
@@ -336,6 +338,7 @@ function Shell() {
     <${TaskEditorHost} />
     <${PrepHost} />
     <${TermPeek} />
+    <${UpdateNotice} />
   </div>`;
 }
 
@@ -350,26 +353,6 @@ function App() {
 }
 
 render(html`<${App} />`, document.getElementById('root'));
-
-// iPhone home-screen app: once the keyboard has been up, iOS can report the
-// screen as shorter than it is (by the status-bar height), which leaves an empty
-// strip under the tab bar. Size the app to the real screen instead.
-(() => {
-  const iphone = /iPhone|iPod/.test(navigator.userAgent);
-  const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  if (!iphone || !standalone) return;
-  const fit = () => {
-    const portrait = window.matchMedia('(orientation: portrait)').matches;
-    const full = (portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height)) || 0;
-    const h = Math.max(window.innerHeight, full);
-    document.documentElement.style.setProperty('--app-h', `${h}px`);
-  };
-  fit();
-  window.addEventListener('resize', fit);
-  window.addEventListener('orientationchange', () => setTimeout(fit, 250));
-  window.visualViewport?.addEventListener('resize', fit);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) fit(); });
-})();
 
 // iPhone/iPad: Daybook scrolls inside its panes and never scrolls the page itself,
 // but the on-screen keyboard can leave the page pushed up or sideways after it
@@ -398,5 +381,8 @@ render(html`<${App} />`, document.getElementById('root'));
 })();
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  // When newer pages arrive while the app is open, offer a reload instead of waiting for the next launch.
+  const hadWorker = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadWorker) setState({ pagesUpdated: true }); });
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }

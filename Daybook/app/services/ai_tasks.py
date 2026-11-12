@@ -7,6 +7,7 @@ parsing) use the fast model; writing jobs use the smart model.
 """
 from __future__ import annotations
 
+import re
 import time
 from datetime import date
 
@@ -450,3 +451,23 @@ async def diff_summary(client, models, *, old_title: str, new_title: str, diff_t
         "and any structural changes. Be specific.\n\n<diff>\n" + diff_text[:14000] + "\n</diff>"),
         model=model, temperature=0.1)
     return {"markdown": out, **t.stats()}
+
+
+async def define_term(client, models, term: str, excerpts: list[dict]) -> dict:
+    """Suggest what a term means from the user's own notes. Never guesses: no evidence, no suggestion."""
+    t = Timer(models["fast"])
+    block = "\n\n".join(f"[{i}] {e['title']}\n{e['text']}" for i, e in enumerate(excerpts, 1))
+    raw = await client.chat(_msgs(
+        f'These passages from the user\'s own notes use the term "{term}". In one plain sentence of at most 25 words, '
+        f'say what the term "{term}" means or stands for as it is used here. Use only what the passages say. '
+        "Do not guess from general knowledge: if the passages do not make the meaning clear, reply with exactly UNKNOWN. "
+        "Reply with the sentence only.\n\n" + block),
+        model=models["fast"], temperature=0.1)
+    text = re.sub(r"<think>.*?</think>", "", raw or "", flags=re.S).strip().strip('"“”').strip()
+    text = re.sub(r"\s+", " ", text.splitlines()[0] if text else "")
+    text = re.sub(r"^\**" + re.escape(term) + r"\**\s*(?:stands for|means|is short for|refers to|[:=–—-])\s*", "", text, flags=re.I).strip()
+    if not text or "UNKNOWN" in text.upper() or len(text) < 3:
+        text = ""
+    elif text[0].islower():
+        text = text[0].upper() + text[1:]
+    return {"definition": text[:400], **t.stats()}

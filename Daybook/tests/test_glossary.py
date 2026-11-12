@@ -93,3 +93,26 @@ def test_glossary_api(client):
     assert "SAS" not in terms and "DPC" in terms
     client.post("/api/glossary/rebuild", headers=H)
     assert "SAS" not in {i["term"] for i in client.get("/api/glossary").json()["items"]}
+
+
+def test_suggest_definition_from_notes(client):
+    """The local AI may suggest a meaning, only from notes that use the term, and nothing is saved until you say so."""
+    a = client.post("/api/notes", json={"title": "Cutover plan", "body": "The DPC team joins next week; DPC owns the cutover to the on-premises data platform."}, headers=H).json()
+    client.post("/api/notes", json={"title": "Odd one", "body": "We keep hearing about ZZQ in standups and nobody explains ZZQ at all."}, headers=H)
+    locked = client.post("/api/notes", json={"title": "Secret", "body": "DPC is the secret project budget line for next year."}, headers=H).json()
+    assert client.post(f"/api/notes/{locked['id']}/lock", json={"passphrase": "vault passphrase"}, headers=H).json()["locked"]
+
+    found = glossary.excerpts("DPC")
+    assert [e["note_id"] for e in found] == [a["id"]]            # the locked note is never read
+    assert "DPC owns the cutover" in found[0]["text"]
+
+    r = client.post("/api/ai/define-term", json={"term": "DPC"}, headers=H).json()
+    assert r["definition"] == "The data private cloud, the on-premises data platform."
+    assert r["sources"] == [{"id": a["id"], "title": "Cutover plan"}] and r["model"]
+    assert not any(t["term"] == "DPC" and t["definition"] for t in glossary.list_terms()["items"])   # a suggestion, not a save
+
+    r = client.post("/api/ai/define-term", json={"term": "ZZQ"}, headers=H).json()
+    assert r["definition"] == "" and "never say" in r["reason"] and r["sources"]
+    r = client.post("/api/ai/define-term", json={"term": "NOPE9"}, headers=H).json()
+    assert r["definition"] == "" and r["sources"] == []
+    assert client.post("/api/ai/define-term", json={"term": " "}, headers=H).status_code == 400

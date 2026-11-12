@@ -1,7 +1,7 @@
 // Today: the date, your schedule, what's due, and your notes.
 import { html, useEffect, useState } from '/vendor/preact.js';
 import { get, post, put } from '../lib/api.js';
-import { toastError, useChanges, useStore } from '../lib/store.js';
+import { toast, toastError, useChanges, useStore } from '../lib/store.js';
 import { navigate } from '../lib/router.js';
 import {
   MONTHS, WEEKDAYS, dayOfYear, daysInYear, fmtAgo, fmtDate, fmtDayRelative, fmtRange, fmtTime, isoWeek, parseYmd, today,
@@ -48,7 +48,7 @@ export function TodayView() {
     setBriefBusy(false);
   };
   const toggleTask = async (t) => {
-    try { await put(`/api/tasks/${t.id}`, { done: !t.done }); load(); } catch (err) { toastError(err); }
+    try { const res = await put(`/api/tasks/${t.id}`, { done: !t.done }); if (res.next) toast(`Done. Next one is due ${fmtDayRelative(res.next.due_date)}.`); load(); } catch (err) { toastError(err); }
   };
 
   const events = data?.events || [];

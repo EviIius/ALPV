@@ -201,7 +201,9 @@ def _deck_cached(src: Source) -> dict:
         return data
 
 
-def deck(note_id: str) -> dict:
+def deck(note_id: str, limit: int | None = None) -> dict:
+    """The drawn slides. With `limit`, only the first few and without speaker notes: a light
+    preview for the note page."""
     row = _readable_row(note_id)
     src = source(row)
     if not src or src.kind != "deck":
@@ -212,7 +214,13 @@ def deck(note_id: str) -> dict:
         raise NotReadable(str(exc)) from exc
     base = f"/api/reader/{note_id}/media/"
     out = dict(data)
-    out["slides"] = [{**s, "html": s["html"].replace(MEDIA_TOKEN, base)} for s in data["slides"]]
+    out["count"] = len(data["slides"])
+    if limit:
+        out["slides"] = [{"n": s["n"], "title": s["title"], "hidden": s.get("hidden", False), "html": s["html"].replace(MEDIA_TOKEN, base)}
+                         for s in data["slides"][:max(1, min(int(limit), 24))]]
+        out.pop("warnings", None)
+    else:
+        out["slides"] = [{**s, "html": s["html"].replace(MEDIA_TOKEN, base)} for s in data["slides"]]
     return out
 
 
