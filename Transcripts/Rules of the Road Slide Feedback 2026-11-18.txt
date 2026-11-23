@@ -1,0 +1,27 @@
+Rules of the road / examples slide: feedback before sending to James
+Date: Wednesday, November 18, 2026 (about 8:28 AM ET)
+
+SUMMARY OF REQUESTED CHANGES
+1. Examples: improve them. Include RAW in each example, described as "landed as is, no transformation".
+2. Reword "add the metadata needed downstream". It's unclear what it means.
+3. Exception wording: "Common conformance: only when not available from the upstream source (SOR / ADS)".
+4. In the header or source area, say "source system (SOR or ADS)".
+5. Group the scenarios by pattern, not by financial risk / financial crimes / NFR:
+   - Risk SOR data (e.g. issues and RCSA come from risk systems; no need to name the actual SOR)
+   - Business data (sourced from upstream ADSs or business group sources)
+   Make the point that the pattern depends on whether data comes from risk SORs or from upstream ADSs / business group sources.
+6. Bottom block: change "Questions for the room" (e.g. "What join counts as common?") to "Questions for our working sessions".
+   Message: initial feedback is welcome, but we want to dive in during the wave 1 working sessions with each group's SMEs at the data subject level. Be as clear as possible about that.
+7. Order of the slides still to be worked out.
+8. Make the changes, review, then send to James.
+9. Add a "who supports whom" line to each zone. Support flips at curated:
+   - RAW: curated owners support the central data team. They review the DQ rules on raw (built with AIDA) so the right rules are in place and nothing is missed.
+   - CONFORMED: curated owners support the central data team. They advise on the common joins (common conformance) and on any formatting needs they have for the data.
+   - CURATED: the model flips; the central data team supports the curated owners. The owners own the curated data sets (VDS). The central team inventories them and makes sure the metadata exists in a common way in DataHub.
+10. Check what Mike said (a comment referenced at 8:35 AM).
+
+TRANSCRIPT (as provided; speakers not labeled)
+The examples I probably need to do a little better on. I want raw in the example, and I want to say like landed as it, like no transformation. What does add the metadata needed downstream? Like add the metadata, we need a wordsmith that. We need to talk about. Oh yeah, you said that. Maybe we say like exception, common conformance, when not support, when not available in upstream. You know what I'm saying? When not available over here. Not available from the raw upstream SLRs. Yeah. And up here we say system, source system SOR or ADS. Let's add. Let's group this by financial risk and non-financial risk. Group the scenarios by financial risk and non-financial risk. Or not. Like just maybe let's group them by risk data, like you know, risk SOR data versus business data. Transit business data, right? So, okay. I think that would be a better. I don't want to talk about financial risk versus financial crimes versus all that crap, right? So like issues would be sharp. Correct. And then RCSA. It's a sharp. I don't. It's sharp and RCSA Navigator. I don't need like the actual SOR name. I'm just saying like, I want you to say that like the scenarios follow the pattern based. The scenarios like the pattern is whether or not we're sourcing data from our risk SORs, or we're sourcing it from upstream ADSs or business group sources. The bottom block for questions for the room, what join counts as common? Yeah. I think it is a question that needs to be asked, but do we ask it here? Yeah, and maybe we say like questions for our working sessions that we want to, as opposed like as this kind of leads into our working like our request to have working sessions, right? As opposed to saying for the room, we can talk about it, like we can say like if there's any initial feedback you have, great, but we really want to dive into this at the in our working sessions with each of your SMEs at the data subject level. Okay. As part of our wave one. But maybe we say that we be as crystal clear as possible as part of the wave. Yeah, I don't know what we talk about. I got to figure out the order. But okay. Anything else? Just let's do that and then see what it looks like. I want to send it to James.
+
+ADDITIONAL TRANSCRIPT (about 8:35 AM)
+Also for the curated, we need to talk about how the central data team supports it, right? Like, you know, maybe for like the conformed, we say, like for the conformed, we say how the business, how the radar team, or sorry, how the curated owners support us, right? So in raw, they would help us establish DQ. You know, we would have Ada. They would review the DQ rules to make sure that we're thinking about everything, to help us make sure that we have the right rules on raw. And conformed, they would give us guidance on, you know, any of the common joins that we talked about, as well as any of like, you know, the formatting needs that they have for that data. And then for curated, we support them, like the model flips, right? In curated, we support them, and we are essentially, you know, you guys own it, but we're gonna inventory it, make sure the metadata exists in a common way in Data Hub. Did you see what Mike said?
